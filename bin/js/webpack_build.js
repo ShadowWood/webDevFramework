@@ -1,18 +1,14 @@
 const path = require('path');
 const fs = require('fs-extra');
-// const uglify = require('uglify-es');
-const WrapperPlugin = require('wrapper-webpack-plugin');
 const webpack = require('webpack');
 const config = require('config');
 
-const websocketClientCode = require('./websocket');
-
 const loaderModuleDirs = [ path.join(__dirname, '../../node_modules') ];
-const outputDir = path.join(__dirname, '../../.tmp/js');
+const outputDir = path.join(__dirname, '../../dist/js');
 
 const webpackConfig = {
   entry: path.join(__dirname, '../../client/js/base.js'),
-  mode: 'development',
+  mode: 'production',
   output: {
     path: outputDir
   },
@@ -30,19 +26,12 @@ const webpackConfig = {
   resolveLoader: {
     modules: loaderModuleDirs
   },
-  devtool: 'source-map'
+  devtool: false
 };
 
 async function compile(compileConfig, outputName) {
-  if (outputName === 'main') {
-    compileConfig = Object.assign({}, compileConfig);
-    compileConfig.plugins = [new WrapperPlugin({
-      header: `(function() {\n${websocketClientCode}\n`,
-      footer: '\n})();\n'
-    })];
-  }
   await fs.ensureDir(outputDir);
-  compileConfig.output.filename = outputName + '.js';
+  compileConfig.output.filename = outputName + '.min.js';
   console.log('Start webpack packing', outputName, '...');
   
   await new Promise((resolve, reject) => {
@@ -60,7 +49,7 @@ async function compile(compileConfig, outputName) {
   });
 
   console.log('Generate JS', compileConfig.output.filename);
-  return '/js/' + outputName + '.js';
+  return '/js/' + outputName + '.min.js';
 }
 
 module.exports = async function bundle(changedFile = null) {
